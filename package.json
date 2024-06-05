@@ -2,6 +2,7 @@
   "name": "nodeserver",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.19.2",
+    "firebase": "^10.12.2",
     "nodemon": "^3.1.3",
     "socket.io": "^4.7.5"
   }
