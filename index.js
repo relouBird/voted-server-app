@@ -1,34 +1,49 @@
-import express from "express";
-import { createServer } from "node:http";
-import cors from "cors"
-import { Server } from "socket.io";
-import { initializeApp } from "firebase/app";
-import {
+// import express from "express";
+const express = require("express");
+// import { createServer } from "node:http";
+const { createServer } = require("http");
+// import cors from "cors"
+const cors = require("cors");
+// import { Server } from "socket.io";
+const { Server } = require("socket.io");
+
+// import { initializeApp } from "firebase/app";
+const { initializeApp } = require("firebase/app");
+
+// import {
+//   getFirestore,
+//   collection,
+//   doc,
+//   setDoc,
+//   getDocs,
+// } from "firebase/firestore";
+const {
   getFirestore,
   collection,
   doc,
   setDoc,
   getDocs,
-} from "firebase/firestore";
-import { config } from "dotenv";
+} = require("firebase/firestore");
+// import { config } from "dotenv";
+const { config } = require("dotenv");
 
 const corsOptions = {
   origin: "*",
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 204,
 };
 
 const app = express();
-app.use(cors(corsOptions))
+app.use(cors(corsOptions));
 const server = createServer(app);
 const io = new Server(server, {
-  cors:  {
+  cors: {
     origin: "*",
-    methods: ['GET', 'POST'],
-    credentials: true
+    methods: ["GET", "POST"],
+    credentials: true,
   },
-  transports: ['websocket', 'polling'],
+  transports: ["websocket", "polling"],
   connectionStateRecovery: {},
 });
 
@@ -51,11 +66,20 @@ const appFirebase = initializeApp(firebaseConfig);
 const db = getFirestore(appFirebase);
 
 let data;
-const querySnapshot = await getDocs(collection(db, "users"));
-querySnapshot.forEach((doc) => {
-  // console.log(`${doc.id} => ${doc.data()}`);
-  data = doc.data();
-});
+async function fetchData() {
+  try {
+    const querySnapshot = await getDocs(collection(db, "users"));
+    querySnapshot.forEach((doc) => {
+      // console.log(`${doc.id} => ${doc.data()}`);
+      data = doc.data();
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données :", error);
+  }
+}
+
+// Appel de la fonction asynchrone
+fetchData();
 
 let totalVoting = 0;
 
