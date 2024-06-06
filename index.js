@@ -23,7 +23,12 @@ const app = express();
 app.use(cors(corsOptions))
 const server = createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" },
+  cors:  {
+    origin: 'https://google-test-relou.vercel.app',
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  transports: ['websocket', 'polling'], // Ajout des transports
   connectionStateRecovery: {},
 });
 
