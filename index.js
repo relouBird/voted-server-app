@@ -9,6 +9,7 @@ import {
   setDoc,
   getDocs,
 } from "firebase/firestore";
+import { config } from "dotenv";
 
 const app = express();
 const server = createServer(app);
@@ -17,10 +18,12 @@ const io = new Server(server, {
   connectionStateRecovery: {},
 });
 
+config();
+
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyAQ5Uv4lnOoYYNHtKUWzlwom5B96dhNpS4",
+  apiKey: process.env.FIREBASE_API_KEY,
   authDomain: "voted-web-app-9e54c.firebaseapp.com",
   projectId: "voted-web-app-9e54c",
   storageBucket: "voted-web-app-9e54c.appspot.com",
@@ -82,7 +85,7 @@ io.on("connection", (socket) => {
     io.emit("update", { totalVoting, votingPolls });
   });
 
-  // ceci est fichier test
+  // ceci est un test
   // permet de creer un user dans la bd
   // socket.emit("update-message", data);
   // socket.on("message", async (message) => {
