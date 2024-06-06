@@ -13,7 +13,7 @@ import {
 import { config } from "dotenv";
 
 const corsOptions = {
-  origin: 'https://google-test-relou.vercel.app',
+  origin: "*",
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204
@@ -24,13 +24,11 @@ app.use(cors(corsOptions))
 const server = createServer(app);
 const io = new Server(server, {
   cors:  {
-    origin: 'https://google-test-relou.vercel.app',
+    origin: "*",
     methods: ['GET', 'POST'],
     credentials: true
   },
   transports: ['websocket', 'polling'],
-  pingTimeout: 60000, // Augmenter le délai d'attente
-  pingInterval: 25000,
   connectionStateRecovery: {},
 });
 
