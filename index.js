@@ -28,7 +28,9 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     credentials: true
   },
-  transports: ['websocket', 'polling'], // Ajout des transports
+  transports: ['websocket', 'polling'],
+  pingTimeout: 60000, // Augmenter le délai d'attente
+  pingInterval: 25000,
   connectionStateRecovery: {},
 });
 
