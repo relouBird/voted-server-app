@@ -1,5 +1,6 @@
 import express from "express";
 import { createServer } from "node:http";
+import cors from "cors"
 import { Server } from "socket.io";
 import { initializeApp } from "firebase/app";
 import {
@@ -11,7 +12,15 @@ import {
 } from "firebase/firestore";
 import { config } from "dotenv";
 
+const corsOptions = {
+  origin: 'https://google-test-relou.vercel.app',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 204
+};
+
 const app = express();
+app.use(cors(corsOptions))
 const server = createServer(app);
 const io = new Server(server, {
   cors: { origin: "*" },
