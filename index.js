@@ -68,7 +68,7 @@ const db = getFirestore(appFirebase);
 let data;
 async function fetchData() {
   try {
-    const querySnapshot = await getDocs(collection(db, "users"));
+    const querySnapshot = await getDocs(collection(db, "test"));
     querySnapshot.forEach((doc) => {
       // console.log(`${doc.id} => ${doc.data()}`);
       data = doc.data();
@@ -105,12 +105,12 @@ io.on("connection", (socket) => {
     totalVoting++;
     votingPolls[vote]++;
     try {
-      const docRef = await setDoc(doc(db, "users", "voting-session"), {
+      const docRef = await setDoc(doc(db, "test", "voting-session"), {
         totalVoting: totalVoting,
         votingPolls: votingPolls,
       });
       console.log("Document written with ID: voting-session");
-      const querySnapshot = await getDocs(collection(db, "users"));
+      const querySnapshot = await getDocs(collection(db, "test"));
       querySnapshot.forEach((doc) => {
         totalVoting = doc.data().totalVoting;
         votingPolls = doc.data().votingPolls;
