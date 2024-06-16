@@ -21,19 +21,9 @@ const {
   getFirestore,
   collection,
   doc,
-  query,
-  where,
   setDoc,
   getDocs,
 } = require("firebase/firestore");
-
-const {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} = require("firebase/storage");
-
 // import { config } from "dotenv";
 const { config } = require("dotenv");
 
@@ -74,14 +64,22 @@ const firebaseConfig = {
 const appFirebase = initializeApp(firebaseConfig);
 // Initialize Cloud Firestore and get a reference to the service
 const db = getFirestore(appFirebase);
-// Initialize Cloud Storage;
-const storage = getStorage(appFirebase);
 
-let data = [];
-
+let data;
+async function fetchData() {
+  try {
+    const querySnapshot = await getDocs(collection(db, "test"));
+    querySnapshot.forEach((doc) => {
+      // console.log(`${doc.id} => ${doc.data()}`);
+      data = doc.data();
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données :", error);
+  }
+}
 
 // Appel de la fonction asynchrone
-// fetchData();
+fetchData();
 
 let totalVoting = 0;
 
@@ -90,6 +88,11 @@ let votingPolls = {
   "I'm good person.": 0,
 };
 
+if (data) {
+  totalVoting = data.totalVoting;
+  votingPolls = data.votingPolls;
+}
+
 app.get("/", (req, res) => {
   res.send("<h1>Hello world</h1>");
 });
@@ -97,44 +100,47 @@ app.get("/", (req, res) => {
 io.on("connection", (socket) => {
   console.log("a user connected");
 
-  socket.emit("receive-submission", data);
-  socket.on("send-submission", async ({ id, mat, nom, imageFile, text }) => {
+  socket.emit("update", { totalVoting, votingPolls });
+  socket.on("send-vote", async (vote) => {
+    totalVoting++;
+    votingPolls[vote]++;
     try {
-      const storageRef = ref(storage, `candidates-${id}/${mat}`);
-
-      // 'file' comes from the Blob or File API
-      await uploadBytes(storageRef, imageFile).then( (snapshot) => {
-        console.log("Uploaded a blob or file!");
-         getDownloadURL(snapshot.ref).then(async (url) => {
-          await setDoc(doc(collection(db, "candidates")), {
-            matricule: mat,
-            voteId: id,
-            nameCandidate: nom,
-            response: text,
-            image: url,
-          });
-        });
+      const docRef = await setDoc(doc(db, "test", "voting-session"), {
+        totalVoting: totalVoting,
+        votingPolls: votingPolls,
       });
-      // recuperation donc du doc
-      data = [];
-      const q = query(collection(db, "candidates"), where("voteId", "==", id));
-      const querySnapshot = await getDocs(q);
-      querySnapshot.forEach((candidateData) => {
-        // console.log(`${doc.id} => ${doc.data()}`);
-        if (candidateData.data()) {
-          data.push(candidateData.data());
-          console.log(candidateData.data());
-        } else {
-          console.log("No data");
-        }
+      console.log("Document written with ID: voting-session");
+      const querySnapshot = await getDocs(collection(db, "test"));
+      querySnapshot.forEach((doc) => {
+        totalVoting = doc.data().totalVoting;
+        votingPolls = doc.data().votingPolls;
       });
     } catch (e) {
       console.error("Error adding document: ", e);
     }
-    console.log("");
-    socket.broadcast.emit("receive-submission-teacher", data);
-    io.emit("receive-submission", data);
+    console.log(vote);
+    socket.broadcast.emit("receive-vote", { totalVoting, votingPolls });
+    io.emit("update", { totalVoting, votingPolls });
   });
+
+  // ceci est un test
+  // permet de creer un user dans la bd
+  // socket.emit("update-message", data);
+  // socket.on("message", async (message) => {
+  //   try {
+  //     const docRef = await setDoc(doc(db, "users", "voting-session"), {
+  //       userId: message,
+  //     });
+  //     console.log("Document written with ID: voting-session");
+  //     const querySnapshot = await getDocs(collection(db, "users"));
+  //     querySnapshot.forEach((doc) => {
+  //       data = doc.data();
+  //     });
+  //   } catch (e) {
+  //     console.error("Error adding document: ", e);
+  //   }
+  //   io.emit("update-message", data);
+  // });
 
   socket.on("disconnect", () => {
     console.log("user disconnected");
