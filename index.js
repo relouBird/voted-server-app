@@ -25,6 +25,7 @@ const {
   where,
   setDoc,
   getDocs,
+  updateDoc,
 } = require("firebase/firestore");
 
 const {
@@ -78,6 +79,8 @@ const db = getFirestore(appFirebase);
 const storage = getStorage(appFirebase);
 
 let data = [];
+
+let vote = [];
 
 
 // Appel de la fonction asynchrone
@@ -134,6 +137,84 @@ io.on("connection", (socket) => {
     console.log("");
     socket.broadcast.emit("receive-submission-teacher", data);
     io.emit("receive-submission", data);
+  });
+
+  socket.emit("receive-vote", vote);
+  socket.on("send-vote", async (tabData) => {
+    // ici il s'agit de mettre les données dans la base de données et maintenant il faut les ressortir pour les envoyer au prof.
+    const q = query(
+      collection(db, "vote"),
+      where("vid", "==", tabData[0])
+    );
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach(async (vote) => {
+      // doc.data() is never undefined for query doc snapshots
+      if(vote.data()){
+        let updatedListeVote = [];
+        if(vote.data().liste_vote && vote.data().liste_vote.length){
+          updatedListeVote = voteData.liste_vote.map(voteItem => {
+            if (String(voteItem)) {
+              return [...voteItem];
+            }
+            return voteItem;
+          });
+        } 
+        updatedListeVote.push(tabData[1]+ ","+ tabData[2]);
+
+        await updateDoc(doc(db, "vote", vote.id), {
+          liste_vote: updatedListeVote,
+        });
+        console.log(`on vote-${tabData[0]} user with matricule ${tabData[2]} voted for candidate with matricule ${tabData[1]}`)
+      }
+    });
+
+    // envoyer les données coté prof.
+    //----------------------------------
+    const querySnapshotUpdate = await getDocs(q);
+    querySnapshotUpdate.forEach((ob)=>{
+      if(ob.data()){
+        let d = ob.data();
+        d.liste_candidate.forEach((candidateMatricule) => {
+          // permet de recuperer le nombre de vote du candidat
+          let candidateVote = 0;
+          d.liste_vote.forEach((tabVote) => {
+            let currentTab = tabVote.split(",");
+            if (currentTab[0] == candidateMatricule) {
+              candidateVote++;
+            }
+          });
+          vote.push([
+            candidateMatricule,
+            "",
+            candidateVote,
+            d.liste_vote.length,
+          ]);
+        })
+      }
+    })
+
+    async function getDataFrom() {
+      for (let i = 0; i < vote.length; i++) {
+        const candidateData = vote[i];
+        const candidateMatriculeQuery = query(
+          collection(db, "candidates"),
+          where("matricule", "==", candidateData[0])
+        );
+        const candidateMatriculeQuerySnapshot = await getDocs(
+          candidateMatriculeQuery
+        );
+        candidateMatriculeQuerySnapshot.forEach((candidate) => {
+          if (candidate.data()) {
+            vote[i][1] = candidate.data().nameCandidate;
+          }
+        });
+      }
+    }
+    await getDataFrom();
+
+    socket.broadcast.emit("receive-vote", vote);
+    io.emit("receive-vote-teacher", vote);
+    io.emit("receive-vote", vote);
   });
 
   socket.on("disconnect", () => {
