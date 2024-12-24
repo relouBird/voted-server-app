@@ -152,7 +152,7 @@ io.on("connection", (socket) => {
       if(vote.data()){
         let updatedListeVote = [];
         if(vote.data().liste_vote && vote.data().liste_vote.length){
-          updatedListeVote = voteData.liste_vote.map(voteItem => {
+          updatedListeVote = vote.data().liste_vote.map(voteItem => {
             if (String(voteItem)) {
               return [...voteItem];
             }
@@ -222,6 +222,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(8000, () => {
-  console.log("server running at http://localhost:8000");
+server.listen(process.env.PORT, () => {
+  console.log("server running at "+ process.env.PORT);
 });
