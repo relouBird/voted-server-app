@@ -55,6 +55,7 @@ const io = new Server(server, {
     credentials: true,
   },
   transports: ["websocket", "polling"],
+  path: '/server/socket.io', // Chemin pour Socket.IO
   connectionStateRecovery: {},
 });
 
@@ -223,5 +224,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(process.env.PORT, () => {
-  console.log("server running at "+ process.env.PORT);
+  console.log("server running at 127.1.0.0:"+ process.env.PORT);
 });
